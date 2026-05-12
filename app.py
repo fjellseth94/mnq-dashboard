@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import random
 
 # =========================
 # PAGE SETTINGS
@@ -17,7 +18,7 @@ st.set_page_config(
 
 st.title("📈 MNQ Bias Dashboard")
 
-st.write("Live Big Tech market dashboard with news and bias detection.")
+st.write("Live Big Tech market dashboard with news, bias detection, and economic calendar.")
 
 # =========================
 # API KEY
@@ -139,6 +140,60 @@ else:
     else:
 
         st.warning("🟡 Neutral Market Sentiment")
+
+# =========================
+# ECONOMIC CALENDAR
+# =========================
+
+st.subheader("📅 Economic Calendar")
+
+economic_data = [
+    {
+        "Event": "CPI",
+        "Actual": 3.4,
+        "Forecast": 3.5,
+        "Previous": 3.7
+    },
+    {
+        "Event": "Core CPI",
+        "Actual": 3.6,
+        "Forecast": 3.7,
+        "Previous": 3.9
+    },
+    {
+        "Event": "NFP",
+        "Actual": 175,
+        "Forecast": 160,
+        "Previous": 210
+    },
+    {
+        "Event": "Unemployment",
+        "Actual": 4.0,
+        "Forecast": 3.9,
+        "Previous": 3.8
+    }
+]
+
+econ_df = pd.DataFrame(economic_data)
+
+st.dataframe(
+    econ_df,
+    use_container_width=True
+)
+
+# =========================
+# ECONOMIC GRAPH
+# =========================
+
+st.subheader("📊 Economic Comparison")
+
+chart_data = econ_df.set_index("Event")[[
+    "Actual",
+    "Forecast",
+    "Previous"
+]]
+
+st.bar_chart(chart_data)
 
 # =========================
 # MARKET NEWS
