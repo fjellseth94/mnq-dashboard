@@ -1,18 +1,33 @@
 import streamlit as st
 import requests
 import pandas as pd
-from streamlit_autorefresh import st_autorefresh
+
+# =========================
+# PAGE SETTINGS
+# =========================
 
 st.set_page_config(
     page_title="MNQ Bias Dashboard",
     layout="wide"
 )
 
-st_autorefresh(interval=5000, key="refresh")
+# =========================
+# TITLE
+# =========================
 
 st.title("📈 MNQ Bias Dashboard")
 
+st.write("Live Big Tech market dashboard with news and bias detection.")
+
+# =========================
+# API KEY
+# =========================
+
 API_KEY = st.secrets["FINNHUB_API_KEY"]
+
+# =========================
+# WATCHLIST
+# =========================
 
 WATCHLIST = {
     "NVDA": "NVIDIA",
@@ -23,6 +38,10 @@ WATCHLIST = {
     "GOOGL": "Google",
     "TSLA": "Tesla"
 }
+
+# =========================
+# GET STOCK DATA
+# =========================
 
 def get_quote(symbol):
 
@@ -35,6 +54,10 @@ def get_quote(symbol):
 
     return None
 
+# =========================
+# GET MARKET NEWS
+# =========================
+
 def get_market_news():
 
     url = f"https://finnhub.io/api/v1/news?category=general&token={API_KEY}"
@@ -45,6 +68,10 @@ def get_market_news():
         return response.json()
 
     return []
+
+# =========================
+# BUILD TABLE DATA
+# =========================
 
 data = []
 
@@ -73,13 +100,17 @@ for ticker, company in WATCHLIST.items():
             "% Change": round(percent_change, 2)
         })
 
+# =========================
+# DATAFRAME
+# =========================
+
 df = pd.DataFrame(data)
 
 st.subheader("🔥 Big Tech Watchlist")
 
 if df.empty:
 
-    st.error("No market data received.")
+    st.error("No market data received from Finnhub API.")
 
 else:
 
@@ -108,6 +139,10 @@ else:
     else:
 
         st.warning("🟡 Neutral Market Sentiment")
+
+# =========================
+# MARKET NEWS
+# =========================
 
 st.subheader("📰 Latest Market News")
 
