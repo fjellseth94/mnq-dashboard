@@ -2,26 +2,17 @@ import streamlit as st
 import requests
 import pandas as pd
 from streamlit_autorefresh import st_autorefresh
-# =========================
-# PAGE SETTINGS
-# =========================
 
 st.set_page_config(
     page_title="MNQ Bias Dashboard",
     layout="wide"
 )
 
-st.title("📈 MNQ Bias Dashboard")
 st_autorefresh(interval=5000, key="refresh")
-# =========================
-# API KEY
-# =========================
+
+st.title("📈 MNQ Bias Dashboard")
 
 API_KEY = st.secrets["FINNHUB_API_KEY"]
-
-# =========================
-# WATCHLIST
-# =========================
 
 WATCHLIST = {
     "NVDA": "NVIDIA",
@@ -33,11 +24,17 @@ WATCHLIST = {
     "TSLA": "Tesla"
 }
 
-# =========================
-# GET STOCK DATA
-# =========================
-
 def get_quote(symbol):
+
+    url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
+
+    response = requests.get(url, timeout=10)
+
+    if response.status_code == 200:
+        return response.json()
+
+    return None
+
 def get_market_news():
 
     url = f"https://finnhub.io/api/v1/news?category=general&token={API_KEY}"
@@ -48,18 +45,6 @@ def get_market_news():
         return response.json()
 
     return []
-    url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
-
-    response = requests.get(url)
-
-    if response.status_code == 200:
-        return response.json()
-
-    return None
-
-# =========================
-# BUILD TABLE DATA
-# =========================
 
 data = []
 
@@ -75,6 +60,7 @@ for ticker, company in WATCHLIST.items():
         percent_change = 0
 
         if previous_close != 0:
+
             percent_change = (
                 (current_price - previous_close)
                 / previous_close
@@ -87,17 +73,13 @@ for ticker, company in WATCHLIST.items():
             "% Change": round(percent_change, 2)
         })
 
-# =========================
-# DATAFRAME
-# =========================
-
-df =df = pd.DataFrame(data)
+df = pd.DataFrame(data)
 
 st.subheader("🔥 Big Tech Watchlist")
 
 if df.empty:
 
-    st.error("No market data received from Finnhub API.")
+    st.error("No market data received.")
 
 else:
 
@@ -126,22 +108,25 @@ else:
     else:
 
         st.warning("🟡 Neutral Market Sentiment")
-        # =========================
-# MARKET NEWS
-# =========================
 
 st.subheader("📰 Latest Market News")
 
 news = get_market_news()
 
-for article in news[:5]:
+if len(news) == 0:
 
-    st.markdown(f"### {article['headline']}")
+    st.warning("No news available.")
 
-    st.write(f"Source: {article['source']}")
+else:
 
-    st.write(article['summary'])
+    for article in news[:5]:
 
-    st.markdown(f"[Read Article]({article['url']})")
+        st.markdown(f"### {article['headline']}")
 
-    st.divider()
+        st.write(f"Source: {article['source']}")
+
+        st.write(article['summary'])
+
+        st.markdown(f"[Read Article]({article['url']})")
+
+        st.divider()
