@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
-import streamlit.components.v1 as components
+from datetime import datetime
 
 # =========================
 # PAGE SETTINGS
@@ -19,47 +19,7 @@ st.set_page_config(
 st.title("📈 MNQ Intraday Trading Dashboard")
 
 st.write(
-    "Live intraday dashboard with futures chart, market bias, economic calendar, and news."
-)
-
-# =========================
-# TRADINGVIEW NQ FUTURES CHART
-# =========================
-
-st.subheader("📊 Live NQ Futures Chart")
-
-tradingview_widget = """
-<!-- TradingView Widget BEGIN -->
-<div class="tradingview-widget-container">
-  <div id="tradingview_chart"></div>
-
-  <script
-    type="text/javascript"
-    src="https://s3.tradingview.com/tv.js">
-  </script>
-
-  <script type="text/javascript">
-  new TradingView.widget({
-    "autosize": true,
-    "symbol": "CME_MINI:NQ1!",
-    "interval": "5",
-    "timezone": "Etc/UTC",
-    "theme": "dark",
-    "style": "1",
-    "locale": "en",
-    "toolbar_bg": "#111827",
-    "enable_publishing": false,
-    "allow_symbol_change": true,
-    "container_id": "tradingview_chart"
-  });
-  </script>
-</div>
-<!-- TradingView Widget END -->
-"""
-
-components.html(
-    tradingview_widget,
-    height=700
+    "Intraday dashboard with MNQ levels, market bias, economic calendar, and news."
 )
 
 # =========================
@@ -81,9 +41,7 @@ WATCHLIST = {
     "GOOGL": "Google",
     "TSLA": "Tesla",
     "SPY": "S&P 500 ETF",
-    "QQQ": "Nasdaq ETF",
-    "DIA": "Dow ETF",
-    "IWM": "Russell ETF"
+    "QQQ": "Nasdaq ETF"
 }
 
 # =========================
@@ -117,7 +75,7 @@ def get_market_news():
     return []
 
 # =========================
-# BUILD MARKET DATA
+# MARKET OVERVIEW
 # =========================
 
 data = []
@@ -148,10 +106,6 @@ for ticker, company in WATCHLIST.items():
         })
 
 df = pd.DataFrame(data)
-
-# =========================
-# MARKET OVERVIEW
-# =========================
 
 st.subheader("🔥 Market Overview")
 
@@ -209,6 +163,38 @@ else:
     )
 
 # =========================
+# MNQ KEY LEVELS
+# =========================
+
+st.subheader("📊 MNQ Key Levels")
+
+mnq_levels = {
+    "Timeframe": [
+        "Previous Day High",
+        "Previous Day Low",
+        "Previous Week High",
+        "Previous Week Low",
+        "Previous Month High",
+        "Previous Month Low"
+    ],
+    "Level": [
+        22025,
+        21895,
+        22350,
+        21480,
+        22800,
+        20850
+    ]
+}
+
+mnq_df = pd.DataFrame(mnq_levels)
+
+st.dataframe(
+    mnq_df,
+    use_container_width=True
+)
+
+# =========================
 # ECONOMIC CALENDAR
 # =========================
 
@@ -242,13 +228,6 @@ economic_data = [
         "Forecast": 3.9,
         "Previous": 3.8,
         "Impact": "🟡 Medium"
-    },
-    {
-        "Event": "PPI",
-        "Actual": 2.1,
-        "Forecast": 2.3,
-        "Previous": 2.5,
-        "Impact": "🟡 Medium"
     }
 ]
 
@@ -263,7 +242,7 @@ st.dataframe(
 # ECONOMIC GRAPH
 # =========================
 
-st.subheader("📊 Economic Comparison")
+st.subheader("📈 Economic Comparison")
 
 chart_data = econ_df.set_index("Event")[[
     "Actual",
@@ -274,7 +253,7 @@ chart_data = econ_df.set_index("Event")[[
 st.bar_chart(chart_data)
 
 # =========================
-# SESSION LEVELS
+# SESSION TRACKING
 # =========================
 
 st.subheader("🌏 Session Tracking")
