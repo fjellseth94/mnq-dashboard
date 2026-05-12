@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
-
+from streamlit_autorefresh import st_autorefresh
 # =========================
 # PAGE SETTINGS
 # =========================
@@ -12,7 +12,7 @@ st.set_page_config(
 )
 
 st.title("📈 MNQ Bias Dashboard")
-
+st_autorefresh(interval=5000, key="refresh")
 # =========================
 # API KEY
 # =========================
@@ -38,7 +38,16 @@ WATCHLIST = {
 # =========================
 
 def get_quote(symbol):
+def get_market_news():
 
+    url = f"https://finnhub.io/api/v1/news?category=general&token={API_KEY}"
+
+    response = requests.get(url, timeout=10)
+
+    if response.status_code == 200:
+        return response.json()
+
+    return []
     url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
 
     response = requests.get(url)
@@ -117,3 +126,22 @@ else:
     else:
 
         st.warning("🟡 Neutral Market Sentiment")
+        # =========================
+# MARKET NEWS
+# =========================
+
+st.subheader("📰 Latest Market News")
+
+news = get_market_news()
+
+for article in news[:5]:
+
+    st.markdown(f"### {article['headline']}")
+
+    st.write(f"Source: {article['source']}")
+
+    st.write(article['summary'])
+
+    st.markdown(f"[Read Article]({article['url']})")
+
+    st.divider()
