@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
+import streamlit.components.v1 as components
 
 # =========================
 # PAGE SETTINGS
@@ -11,10 +12,50 @@ st.set_page_config(
     layout="wide"
 )
 
+# =========================
+# TITLE
+# =========================
+
 st.title("📈 MNQ Intraday Trading Dashboard")
 
 st.write(
-    "Live market dashboard for MNQ intraday/day trading."
+    "Live intraday dashboard with MNQ futures chart, market bias, news, and economic calendar."
+)
+
+# =========================
+# TRADINGVIEW MNQ CHART
+# =========================
+
+st.subheader("📊 Live MNQ Futures Chart")
+
+tradingview_widget = """
+<!-- TradingView Widget BEGIN -->
+<div class="tradingview-widget-container">
+  <div id="tradingview_chart"></div>
+  <script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
+  <script type="text/javascript">
+  new TradingView.widget({
+    "width": "100%",
+    "height": 650,
+    "symbol": "CME_MINI:MNQ1!",
+    "interval": "5",
+    "timezone": "Etc/UTC",
+    "theme": "dark",
+    "style": "1",
+    "locale": "en",
+    "toolbar_bg": "#1f2937",
+    "enable_publishing": false,
+    "allow_symbol_change": true,
+    "container_id": "tradingview_chart"
+  });
+  </script>
+</div>
+<!-- TradingView Widget END -->
+"""
+
+components.html(
+    tradingview_widget,
+    height=700
 )
 
 # =========================
@@ -24,7 +65,7 @@ st.write(
 API_KEY = st.secrets["FINNHUB_API_KEY"]
 
 # =========================
-# MARKET WATCHLIST
+# WATCHLIST
 # =========================
 
 WATCHLIST = {
@@ -42,7 +83,7 @@ WATCHLIST = {
 }
 
 # =========================
-# GET QUOTE
+# GET STOCK DATA
 # =========================
 
 def get_quote(symbol):
@@ -197,13 +238,6 @@ economic_data = [
         "Forecast": 3.9,
         "Previous": 3.8,
         "Impact": "🟡 Medium"
-    },
-    {
-        "Event": "PPI",
-        "Actual": 2.1,
-        "Forecast": 2.3,
-        "Previous": 2.5,
-        "Impact": "🟡 Medium"
     }
 ]
 
@@ -227,38 +261,6 @@ chart_data = econ_df.set_index("Event")[[
 ]]
 
 st.bar_chart(chart_data)
-
-# =========================
-# SESSION LEVELS
-# =========================
-
-st.subheader("🌏 Session Tracking")
-
-session_data = {
-    "Session": [
-        "Asia High",
-        "Asia Low",
-        "London High",
-        "London Low",
-        "Premarket High",
-        "Premarket Low"
-    ],
-    "Level": [
-        21890,
-        21740,
-        21980,
-        21810,
-        22025,
-        21895
-    ]
-}
-
-session_df = pd.DataFrame(session_data)
-
-st.dataframe(
-    session_df,
-    use_container_width=True
-)
 
 # =========================
 # MARKET NEWS
