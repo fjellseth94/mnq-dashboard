@@ -1,24 +1,21 @@
 import streamlit as st
 import requests
 import pandas as pd
-import random
 
 # =========================
 # PAGE SETTINGS
 # =========================
 
 st.set_page_config(
-    page_title="MNQ Bias Dashboard",
+    page_title="MNQ Intraday Dashboard",
     layout="wide"
 )
 
-# =========================
-# TITLE
-# =========================
+st.title("📈 MNQ Intraday Trading Dashboard")
 
-st.title("📈 MNQ Bias Dashboard")
-
-st.write("Live Big Tech market dashboard with news, bias detection, and economic calendar.")
+st.write(
+    "Live market dashboard for MNQ intraday/day trading."
+)
 
 # =========================
 # API KEY
@@ -27,7 +24,7 @@ st.write("Live Big Tech market dashboard with news, bias detection, and economic
 API_KEY = st.secrets["FINNHUB_API_KEY"]
 
 # =========================
-# WATCHLIST
+# MARKET WATCHLIST
 # =========================
 
 WATCHLIST = {
@@ -37,11 +34,15 @@ WATCHLIST = {
     "META": "Meta",
     "AMZN": "Amazon",
     "GOOGL": "Google",
-    "TSLA": "Tesla"
+    "TSLA": "Tesla",
+    "SPY": "S&P 500 ETF",
+    "QQQ": "Nasdaq ETF",
+    "DIA": "Dow ETF",
+    "IWM": "Russell ETF"
 }
 
 # =========================
-# GET STOCK DATA
+# GET QUOTE
 # =========================
 
 def get_quote(symbol):
@@ -71,7 +72,7 @@ def get_market_news():
     return []
 
 # =========================
-# BUILD TABLE DATA
+# BUILD MARKET DATA
 # =========================
 
 data = []
@@ -101,17 +102,17 @@ for ticker, company in WATCHLIST.items():
             "% Change": round(percent_change, 2)
         })
 
-# =========================
-# DATAFRAME
-# =========================
-
 df = pd.DataFrame(data)
 
-st.subheader("🔥 Big Tech Watchlist")
+# =========================
+# MARKET OVERVIEW
+# =========================
+
+st.subheader("🔥 Market Overview")
 
 if df.empty:
 
-    st.error("No market data received from Finnhub API.")
+    st.error("No market data received.")
 
 else:
 
@@ -120,26 +121,47 @@ else:
         use_container_width=True
     )
 
-    bullish = len(df[df["% Change"] > 0])
-    bearish = len(df[df["% Change"] < 0])
+# =========================
+# INTRADAY BIAS ENGINE
+# =========================
 
-    st.subheader("🧠 Market Bias")
+st.subheader("🧠 Intraday Bias Engine")
 
-    if bullish > bearish:
+bullish = len(df[df["% Change"] > 0])
+bearish = len(df[df["% Change"] < 0])
 
-        st.success(
-            f"🟢 Bullish Sentiment ({bullish} bullish vs {bearish} bearish)"
-        )
+tech_strength = len(
+    df[
+        (df["Ticker"].isin([
+            "NVDA",
+            "AAPL",
+            "MSFT",
+            "META",
+            "AMZN",
+            "GOOGL"
+        ]))
+        &
+        (df["% Change"] > 0)
+    ]
+)
 
-    elif bearish > bullish:
+if bullish > bearish and tech_strength >= 4:
 
-        st.error(
-            f"🔴 Bearish Sentiment ({bearish} bearish vs {bullish} bullish)"
-        )
+    st.success(
+        "🟢 Bullish MNQ Bias — Strong tech participation."
+    )
 
-    else:
+elif bearish > bullish:
 
-        st.warning("🟡 Neutral Market Sentiment")
+    st.error(
+        "🔴 Bearish MNQ Bias — Weak market breadth."
+    )
+
+else:
+
+    st.warning(
+        "🟡 Neutral / Mixed Market Conditions."
+    )
 
 # =========================
 # ECONOMIC CALENDAR
@@ -152,25 +174,36 @@ economic_data = [
         "Event": "CPI",
         "Actual": 3.4,
         "Forecast": 3.5,
-        "Previous": 3.7
+        "Previous": 3.7,
+        "Impact": "🔴 High"
     },
     {
         "Event": "Core CPI",
         "Actual": 3.6,
         "Forecast": 3.7,
-        "Previous": 3.9
+        "Previous": 3.9,
+        "Impact": "🔴 High"
     },
     {
         "Event": "NFP",
         "Actual": 175,
         "Forecast": 160,
-        "Previous": 210
+        "Previous": 210,
+        "Impact": "🔴 High"
     },
     {
         "Event": "Unemployment",
         "Actual": 4.0,
         "Forecast": 3.9,
-        "Previous": 3.8
+        "Previous": 3.8,
+        "Impact": "🟡 Medium"
+    },
+    {
+        "Event": "PPI",
+        "Actual": 2.1,
+        "Forecast": 2.3,
+        "Previous": 2.5,
+        "Impact": "🟡 Medium"
     }
 ]
 
@@ -196,10 +229,42 @@ chart_data = econ_df.set_index("Event")[[
 st.bar_chart(chart_data)
 
 # =========================
+# SESSION LEVELS
+# =========================
+
+st.subheader("🌏 Session Tracking")
+
+session_data = {
+    "Session": [
+        "Asia High",
+        "Asia Low",
+        "London High",
+        "London Low",
+        "Premarket High",
+        "Premarket Low"
+    ],
+    "Level": [
+        21890,
+        21740,
+        21980,
+        21810,
+        22025,
+        21895
+    ]
+}
+
+session_df = pd.DataFrame(session_data)
+
+st.dataframe(
+    session_df,
+    use_container_width=True
+)
+
+# =========================
 # MARKET NEWS
 # =========================
 
-st.subheader("📰 Latest Market News")
+st.subheader("📰 Market News")
 
 news = get_market_news()
 
@@ -211,12 +276,20 @@ else:
 
     for article in news[:5]:
 
-        st.markdown(f"### {article['headline']}")
+        st.markdown(
+            f"### {article['headline']}"
+        )
 
-        st.write(f"Source: {article['source']}")
+        st.write(
+            f"Source: {article['source']}"
+        )
 
-        st.write(article['summary'])
+        st.write(
+            article['summary']
+        )
 
-        st.markdown(f"[Read Article]({article['url']})")
+        st.markdown(
+            f"[Read Article]({article['url']})"
+        )
 
         st.divider()
