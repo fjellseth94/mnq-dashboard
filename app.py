@@ -1,7 +1,7 @@
 import streamlit as st
 import requests
 import pandas as pd
-from datetime import datetime
+import yfinance as yf
 
 # =========================
 # PAGE SETTINGS
@@ -19,7 +19,7 @@ st.set_page_config(
 st.title("📈 MNQ Intraday Trading Dashboard")
 
 st.write(
-    "Intraday dashboard with MNQ levels, market bias, economic calendar, and news."
+    "Live intraday dashboard with NQ futures levels, market bias, economic calendar, and news."
 )
 
 # =========================
@@ -163,36 +163,72 @@ else:
     )
 
 # =========================
-# MNQ KEY LEVELS
+# LIVE NQ FUTURES LEVELS
 # =========================
 
-st.subheader("📊 MNQ Key Levels")
+st.subheader("📊 Live NQ Futures Levels")
 
-mnq_levels = {
-    "Timeframe": [
-        "Previous Day High",
-        "Previous Day Low",
-        "Previous Week High",
-        "Previous Week Low",
-        "Previous Month High",
-        "Previous Month Low"
-    ],
-    "Level": [
-        22025,
-        21895,
-        22350,
-        21480,
-        22800,
-        20850
-    ]
-}
+try:
 
-mnq_df = pd.DataFrame(mnq_levels)
+    nq = yf.Ticker("NQ=F")
 
-st.dataframe(
-    mnq_df,
-    use_container_width=True
-)
+    hist = nq.history(period="1mo")
+
+    current_price = hist["Close"].iloc[-1]
+
+    previous_day = hist["Close"].iloc[-2]
+
+    previous_week = hist["Close"].iloc[-6]
+
+    previous_month = hist["Close"].iloc[0]
+
+    def get_bias(current, previous):
+
+        if current > previous:
+            return "🟢 Bullish"
+
+        elif current < previous:
+            return "🔴 Bearish"
+
+        else:
+            return "🟡 Neutral"
+
+    levels_data = {
+        "Timeframe": [
+            "Previous Day",
+            "Previous Week",
+            "Previous Month"
+        ],
+
+        "Reference Price": [
+            round(previous_day, 2),
+            round(previous_week, 2),
+            round(previous_month, 2)
+        ],
+
+        "Current Price": [
+            round(current_price, 2),
+            round(current_price, 2),
+            round(current_price, 2)
+        ],
+
+        "Bias": [
+            get_bias(current_price, previous_day),
+            get_bias(current_price, previous_week),
+            get_bias(current_price, previous_month)
+        ]
+    }
+
+    levels_df = pd.DataFrame(levels_data)
+
+    st.dataframe(
+        levels_df,
+        use_container_width=True
+    )
+
+except Exception as e:
+
+    st.error(f"Error loading NQ futures data: {e}")
 
 # =========================
 # ECONOMIC CALENDAR
